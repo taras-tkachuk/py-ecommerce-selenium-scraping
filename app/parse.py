@@ -22,7 +22,7 @@ COMPUTERS_URL = urljoin(BASE_URL, "test-sites/e-commerce/more/computers")
 LAPTOPS_URL = urljoin(BASE_URL, "test-sites/e-commerce/more/computers/laptops")
 TABLETS_URL = urljoin(BASE_URL, "test-sites/e-commerce/more/computers/tablets")
 PHONE_URL = urljoin(BASE_URL, "test-sites/e-commerce/more/phones")
-TOUCH_URL = urljoin(BASE_URL, "/test-sites/e-commerce/more/phones/touch")
+TOUCH_URL = urljoin(BASE_URL, "test-sites/e-commerce/more/phones/touch")
 
 PAGES = (
     (HOME_URL, "home.csv"),
@@ -101,11 +101,9 @@ def parse_single_product(product: WebElement) -> Product | None:
     title = product.find_element(By.CLASS_NAME, "title").get_attribute("title")
     description = product.find_element(By.CLASS_NAME, "description").text
     price = product.find_element(By.CLASS_NAME, "price").text
-    if price:
-        price = float(price.replace("$", ""))
+    price = float(price.replace("$", ""))
     review_count = product.find_element(By.CLASS_NAME, "review-count").text
-    if review_count:
-        review_count = int(review_count.split(" ")[0])
+    review_count = int(review_count.split(" ")[0])
     rating = len(product.find_elements(By.CLASS_NAME, "ws-icon-star"))
     return Product(
         title=title,
@@ -168,6 +166,7 @@ def get_all_products(pages: tuple[tuple[str]] = PAGES) -> list[Product]:
             products = parse_page_products(url, pbar)
             write_page_to_csv(csv_file_name, products)
             all_products.extend(products)
+    DRIVER.driver.close()
     return all_products
 
 
