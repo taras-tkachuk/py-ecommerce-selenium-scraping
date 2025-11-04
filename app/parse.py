@@ -100,10 +100,16 @@ def scroll_more(driver: WebDriver) -> None:
 def parse_single_product(product: WebElement) -> Product | None:
     title = product.find_element(By.CLASS_NAME, "title").get_attribute("title")
     description = product.find_element(By.CLASS_NAME, "description").text
-    price = product.find_element(By.CLASS_NAME, "price").text
-    price = float(price.replace("$", ""))
-    review_count = product.find_element(By.CLASS_NAME, "review-count").text
-    review_count = int(review_count.split(" ")[0])
+    try:
+        price = product.find_element(By.CLASS_NAME, "price").text
+        price = float(price.replace("$", ""))
+    except Exception as e:
+        price = None
+    try:
+        review_count = product.find_element(By.CLASS_NAME, "review-count").text
+        review_count = int(review_count.split(" ")[0])
+    except Exception as e:
+        review_count = None
     rating = len(product.find_elements(By.CLASS_NAME, "ws-icon-star"))
     return Product(
         title=title,
@@ -141,33 +147,34 @@ def write_page_to_csv(filename: str, products: list[Product]) -> None:
     return
 
 
-def get_all_products(pages: tuple[tuple[str]] = PAGES) -> list[Product]:
-    DRIVER.driver = webdriver.Chrome
+def get_all_products(pages: tuple[tuple[str]] = PAGES) -> None:
+    try:
+        DRIVER.driver = webdriver.Chrome
 
-    all_products = []
-    bar_format = (
-        "{desc}: {percentage:3.0f}% |{bar}| "
-        "{n_fmt}/{total_fmt} • {elapsed}s • {rate_fmt}"
-    )
-    with tqdm(
-        total=156,
-        desc="Parsing products",
-        unit="products",
-        colour="magenta",
-        ascii="░▒▓█",
-        bar_format=bar_format,
-        dynamic_ncols=True,
-    ) as pbar:
-        for i, page in enumerate(pages):
-            url = page[0]
-            csv_file_name = page[1]
+        all_products = []
+        bar_format = (
+            "{desc}: {percentage:3.0f}% |{bar}| "
+            "{n_fmt}/{total_fmt} • {elapsed}s • {rate_fmt}"
+        )
+        with tqdm(
+            total=156,
+            desc="Parsing products",
+            unit="products",
+            colour="magenta",
+            ascii="░▒▓█",
+            bar_format=bar_format,
+            dynamic_ncols=True,
+        ) as pbar:
+            for i, page in enumerate(pages):
+                url = page[0]
+                csv_file_name = page[1]
 
-            pbar.set_description_str(f"Page {i}/{len(pages)}: {url}")
-            products = parse_page_products(url, pbar)
-            write_page_to_csv(csv_file_name, products)
-            all_products.extend(products)
-    DRIVER.driver.close()
-    return all_products
+                pbar.set_description_str(f"Page {i}/{len(pages)}: {url}")
+                products = parse_page_products(url, pbar)
+                write_page_to_csv(csv_file_name, products)
+                all_products.extend(products)
+    finally:
+        DRIVER.driver.quit()
 
 
 if __name__ == "__main__":
